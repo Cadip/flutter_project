@@ -21,9 +21,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("${authService.getCurrentUserName().toString()} Profile's"),
+        backgroundColor: Colors.blueAccent,
+        title: Text("${authService.getCurrentUserName().toString()} Profile"),
         titleTextStyle: const TextStyle(
-          color: Colors.blueAccent,
+          color: Colors.black,
           fontSize: 40,
           fontWeight: FontWeight.bold,
         ),

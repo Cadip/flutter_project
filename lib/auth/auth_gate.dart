@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '/pages/login_page.dart';
 import '/pages/profile_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../pages/main_navigation.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -29,7 +30,7 @@ class AuthGate extends StatelessWidget {
         //check if there is a valid session currently
         final session = snapshot.hasData ? snapshot.data!.session : null;
         if (session != null) {
-          return ProfilePage();
+          return const MainNavigation();
         } else {
           return LoginPage();
         }
