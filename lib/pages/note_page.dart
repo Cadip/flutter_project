@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../notes/note.dart';
-import '../notes/note_database.dart';
+import '../notes/note_hive_database.dart';
 import '/auth/auth_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class NotePage extends StatefulWidget {
   const NotePage({super.key});
@@ -12,137 +13,188 @@ class NotePage extends StatefulWidget {
 
 class _NotePageState extends State<NotePage> {
   final authService = AuthService();
-  final notesDatabase = NoteDatabase();
+  final notesDatabase = HiveNoteDatabase();
   final noteController = TextEditingController();
   final titleController = TextEditingController();
 
   void addNewNote() {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text("Add Note"),
-            backgroundColor: Colors.green,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                TextField(
-                  controller: noteController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
-                ),
-              ],
+      builder: (context) => AlertDialog(
+        title: const Text("Add Note"),
+        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              decoration: InputDecoration(
+                labelText: 'Title',
+                labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  noteController.clear();
-                },
-                child: const Text("Cancel", style: TextStyle(color: Colors.red)),
+            const SizedBox(height: 10),
+            TextField(
+              controller: noteController,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              decoration: InputDecoration(
+                labelText: 'Notes',
+                labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
               ),
-              TextButton(
-                onPressed: () {
-                  final newNote = Note(
-                    userId: authService.getCurrentUserId().toString(),
-                    title: titleController.text,
-                    content: noteController.text,
-                    isDone: false,
-                  );
-                  notesDatabase.createNote(newNote);
-                  Navigator.pop(context);
-                  noteController.clear();
-                },
-                child: const Text(
-                  "Save",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              noteController.clear();
+              titleController.clear();
+            },
+            child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              final newNote = Note(
+                userId: authService.getCurrentUserId().toString(),
+                title: titleController.text,
+                content: noteController.text,
+                isDone: false,
+              );
+              await notesDatabase.addNote(newNote);
+              Navigator.pop(context);
+              noteController.clear();
+              titleController.clear();
+              setState(() {});
+            },
+            child: const Text("Save"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  void updateNote(Note note) {
+  void updateNote(int key, Note note) {
     titleController.text = note.title;
     noteController.text = note.content;
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text("Update Note"),
-            backgroundColor: Colors.yellowAccent,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                TextField(
-                  controller: noteController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
-                ),
-              ],
+      builder: (context) => AlertDialog(
+        title: const Text("Update Note"),
+        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              decoration: InputDecoration(
+                labelText: 'Title',
+                labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  titleController.clear();
-                  noteController.clear();
-                },
-                child: const Text(
-                  "Cancel",
-                  style: TextStyle(color: Colors.red),
-                ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: noteController,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              decoration: InputDecoration(
+                labelText: 'Notes',
+                labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
               ),
-              TextButton(
-                onPressed: () {
-                  notesDatabase.updateNote(
-                    note,
-                    titleController.text,
-                    noteController.text,
-                  );
-                  Navigator.pop(context);
-                  noteController.clear();
-                  titleController.clear();
-                },
-                child: const Text("Save", style: TextStyle(color: Colors.blue)),
-              ),
-            ],
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              titleController.clear();
+              noteController.clear();
+            },
+            child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              final updatedNote = Note(
+                userId: note.userId,
+                title: titleController.text,
+                content: noteController.text,
+                isDone: note.isDone,
+              );
+              await notesDatabase.updateNote(key, updatedNote);
+              Navigator.pop(context);
+              titleController.clear();
+              noteController.clear();
+              setState(() {});
+            },
+            child: const Text("Save"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  void deleteNote(Note note) {
+  void deleteNote(int key) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text("Delete Note"),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  noteController.clear();
-                },
-                child: const Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () {
-                  notesDatabase.deleteNote(note);
-                  Navigator.pop(context);
-                  noteController.clear();
-                },
-                child: const Text("Delete", style: TextStyle(color: Colors.red)),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Note"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        content: const Text("Are you sure you want to delete this note?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              noteController.clear();
+              titleController.clear();
+            },
+            child: const Text("Cancel"),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              await notesDatabase.deleteNote(key);
+              Navigator.pop(context);
+              noteController.clear();
+              titleController.clear();
+              setState(() {});
+            },
+            child: const Text("Delete"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -150,62 +202,88 @@ class _NotePageState extends State<NotePage> {
   Widget build(BuildContext context) {
     final userId = authService.getCurrentUserId().toString();
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
-        title: Text("${authService.getCurrentUserName().toString()} Notes"),
-        titleTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 40,
-          fontWeight: FontWeight.bold,
-        ),
-        centerTitle: true,
-      ),
+      appBar: null,
       floatingActionButton: FloatingActionButton(
         onPressed: () => addNewNote(),
-        child: const Icon(Icons.add),
+        backgroundColor: Theme.of(context).floatingActionButtonTheme.backgroundColor,
+        child: const Icon(Icons.add, size: 30),
       ),
-      body: StreamBuilder(
-        stream: notesDatabase.stream(userId),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+      body: ValueListenableBuilder(
+        valueListenable: Hive.box<Note>('notesBox').listenable(),
+        builder: (context, Box<Note> box, _) {
+          final notes = box.values.toList();
+          if (notes.isEmpty) {
+            return Center(
+              child: Text(
+                "No notes available.",
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+              ),
+            );
           }
-          final notes = snapshot.data!;
           return ListView.builder(
+            padding: const EdgeInsets.all(10),
             itemCount: notes.length,
             itemBuilder: (context, index) {
               final note = notes[index];
-              return ListTile(
-                leading: Checkbox(
-                  value: note.isDone,
-                  onChanged: (value) {
-                    notesDatabase.updateStatus(note, value ?? false);
-                  },
+              final key = box.keyAt(index) as int;
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                title: Text(note.title),
-                titleTextStyle: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  decoration: note.isDone ? TextDecoration.lineThrough : null,
-                ),
-                subtitle: Text(note.content),
-                subtitleTextStyle: TextStyle(
-                  decoration: note.isDone ? TextDecoration.lineThrough : null,
-                ),
-                trailing: SizedBox(
-                  width: 100,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => updateNote(note),
-                        icon: const Icon(Icons.edit),
-                        color: Colors.amberAccent,
-                      ),
-                      IconButton(
-                        onPressed: () => deleteNote(note),
-                        icon: const Icon(Icons.delete),
-                        color: Colors.redAccent,
-                      ),
-                    ],
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  leading: Checkbox(
+                    value: note.isDone,
+                    onChanged: (value) async {
+                      final updatedNote = Note(
+                        userId: note.userId,
+                        title: note.title,
+                        content: note.content,
+                        isDone: value ?? false,
+                      );
+                      await notesDatabase.updateNote(key, updatedNote);
+                      setState(() {});
+                    },
+                  ),
+                  title: Text(
+                    note.title,
+                    style: TextStyle(
+                      color: note.isDone
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).textTheme.titleLarge?.color,
+                      fontWeight: FontWeight.bold,
+                      decoration: note.isDone ? TextDecoration.lineThrough : null,
+                      fontSize: 18,
+                    ),
+                  ),
+                  subtitle: Text(
+                    note.content,
+                    style: TextStyle(
+                      color: note.isDone
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).textTheme.bodyMedium?.color,
+                      decoration: note.isDone ? TextDecoration.lineThrough : null,
+                      fontSize: 15,
+                    ),
+                  ),
+                  trailing: SizedBox(
+                    width: 100,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => updateNote(key, note),
+                          icon: const Icon(Icons.edit),
+                          color: Colors.amberAccent,
+                        ),
+                        IconButton(
+                          onPressed: () => deleteNote(key),
+                          icon: const Icon(Icons.delete),
+                          color: Colors.redAccent,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

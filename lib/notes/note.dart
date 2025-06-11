@@ -1,8 +1,22 @@
-class Note {
+import 'package:hive/hive.dart';
+
+part 'note.g.dart';
+
+@HiveType(typeId: 0)
+class Note extends HiveObject {
+  @HiveField(0)
   int? id;
+
+  @HiveField(1)
   String userId;
+
+  @HiveField(2)
   String title;
+
+  @HiveField(3)
   String content;
+
+  @HiveField(4)
   bool isDone;
 
   Note({
@@ -12,6 +26,7 @@ class Note {
     required this.content,
     required this.isDone,
   });
+
   factory Note.fromMap(Map<String, dynamic> map) {
     return Note(
       id: map['id'] as int,
